@@ -10,7 +10,8 @@ mkdir -p "$OUTPUT_DIR"
 
 echo "Downloading all repos from $ORG..."
 
-repos=$(gh repo list $ORG --limit 300 --json name -q '.[].name' | grep -iE 'generator|Generator')
+# Filter: G-1 to G-50 only
+repos=$(gh repo list $ORG --limit 300 --json name -q '.[].name' | grep -E '^G-([1-9]|[1-4][0-9]|50)_')
 
 total=$(echo "$repos" | wc -l | tr -d ' ')
 count=0

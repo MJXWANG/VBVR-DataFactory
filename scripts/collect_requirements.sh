@@ -9,7 +9,8 @@ TEMP_DIR=$(mktemp -d)
 
 echo "Collecting requirements from $ORG repos..."
 
-repos=$(gh repo list $ORG --limit 300 --json name -q '.[].name')
+# Filter: G-1 to G-50 only
+repos=$(gh repo list $ORG --limit 300 --json name -q '.[].name' | grep -E '^G-([1-9]|[1-4][0-9]|50)_')
 
 for repo in $repos; do
     echo -n "  $repo: "
