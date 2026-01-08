@@ -4,6 +4,7 @@ import json
 import shutil
 import subprocess
 import re
+import gc
 import boto3
 from pathlib import Path
 
@@ -53,20 +54,64 @@ def process_task(task):
     start_index = task.get('start_index', 0)  # Starting index for task IDs
     seed = task.get('seed')  # Optional seed parameter
     
+    # For large batches, process in smaller chunks to avoid memory issues
+    BATCH_SIZE = 100  # Process 100 samples at a time
+    total_uploaded = 0
+    all_sample_ids = []
+    
+    if num_samples > BATCH_SIZE:
+        print(f"Large batch detected ({num_samples} samples). Processing in batches of {BATCH_SIZE}")
+        
+        for batch_start in range(0, num_samples, BATCH_SIZE):
+            batch_size = min(BATCH_SIZE, num_samples - batch_start)
+            batch_start_index = start_index + batch_start
+            
+            print(f"Processing batch: {batch_start}/{num_samples} (samples {batch_start_index} to {batch_start_index + batch_size - 1})")
+            
+            # Process this batch
+            batch_result = process_batch(
+                task_type=task_type,
+                num_samples=batch_size,
+                start_index=batch_start_index,
+                seed=seed,
+                batch_num=batch_start // BATCH_SIZE
+            )
+            
+            total_uploaded += batch_result['samples_uploaded']
+            all_sample_ids.extend(batch_result['sample_ids'])
+            
+            # Force garbage collection after each batch
+            gc.collect()
+            print(f"Batch complete. Total uploaded so far: {total_uploaded}/{num_samples}")
+        
+        return {
+            'generator': task_type,
+            'samples_uploaded': total_uploaded,
+            'sample_ids': all_sample_ids
+        }
+    else:
+        # Small batch, process normally
+        return process_batch(task_type, num_samples, start_index, seed, 0)
+
+
+def process_batch(task_type, num_samples, start_index, seed, batch_num):
+    """Process a single batch of samples."""
     # Find generator directory
     generator_path = os.path.join(GENERATORS_PATH, task_type)
     if not os.path.exists(generator_path):
         raise ValueError(f"Generator not found: {task_type} at {generator_path}")
     
-    # Use temporary output directory
-    output_dir = f'/tmp/output_{task_type}_{os.getpid()}'
+    # Use batch-specific output directory to avoid conflicts
+    output_dir = f'/tmp/output_{task_type}_{os.getpid()}_batch{batch_num}'
     
     # Build command: python examples/generate.py --num-samples {num_samples}
     cmd = [sys.executable, 'examples/generate.py', '--num-samples', str(num_samples)]
     
-    # Add seed if provided
+    # Add seed if provided (adjust seed for each batch to maintain reproducibility)
     if seed is not None:
-        cmd.extend(['--seed', str(seed)])
+        # Use different seed for each batch to maintain overall reproducibility
+        batch_seed = seed + batch_num * 10000 if seed is not None else None
+        cmd.extend(['--seed', str(batch_seed)])
     
     # Add output directory
     cmd.extend(['--output', output_dir])
@@ -84,41 +129,36 @@ def process_task(task):
             text=True
         )
         print(f"Generator completed successfully")
-        print(f"Generator stdout: {result.stdout}")
+        if result.stdout:
+            print(f"Generator stdout (first 500 chars): {result.stdout[:500]}")
         if result.stderr:
-            print(f"Generator stderr: {result.stderr}")
+            print(f"Generator stderr (first 500 chars): {result.stderr[:500]}")
     except subprocess.CalledProcessError as e:
         print(f"Generator failed with return code {e.returncode}")
-        print(f"stdout: {e.stdout}")
-        print(f"stderr: {e.stderr}")
+        print(f"stdout: {e.stdout[:1000] if e.stdout else 'None'}")
+        print(f"stderr: {e.stderr[:1000] if e.stderr else 'None'}")
         print(f"Command that failed: {' '.join(cmd)}")
         print(f"Working directory: {generator_path}")
         raise
     
-    # Debug: Check what was actually created
+    # Check output directory (minimal logging to save memory)
     output_path = Path(output_dir)
     print(f"Checking output directory: {output_dir}")
     print(f"Output directory exists: {output_path.exists()}")
     
-    if output_path.exists():
-        print(f"Output directory contents:")
-        for item in output_path.rglob('*'):
-            if item.is_dir():
-                print(f"  DIR:  {item}")
-            elif item.is_file():
-                print(f"  FILE: {item}")
-    
-    # Find generated task directories
+    # Find generated task directories (avoid listing all files to save memory)
     # Based on OutputWriter, files are created at: output_dir/{domain}_task/{task_id}/
     # We need to search recursively for _task directories
     
     questions_dir = None
     
     # First, try to find _task directories directly under output_path
+    # Use iterator to avoid loading all paths into memory
     print(f"Searching for _task directories in: {output_path}")
     if output_path.exists():
-        # Look for _task directories recursively
-        for item in output_path.rglob('*_task'):
+        # Look for _task directories recursively using iterator
+        _task_iterator = output_path.rglob('*_task')
+        for item in _task_iterator:
             if item.is_dir():
                 print(f"Found _task directory at: {item}")
                 # Use the parent directory as base (which should contain the _task dirs)
@@ -126,10 +166,17 @@ def process_task(task):
                 print(f"Using base directory: {questions_dir}")
                 break
         
-        # If not found by _task pattern, try finding by task files
+        # If not found by _task pattern, try finding by task files (limit search depth)
         if not questions_dir:
             print(f"Searching for task files (png/txt/mp4) in: {output_path}")
-            for item in output_path.rglob('*'):
+            # Limit search to avoid memory issues - only check first few files
+            file_iterator = output_path.rglob('*')
+            checked = 0
+            max_checks = 100  # Limit initial search
+            for item in file_iterator:
+                if checked >= max_checks:
+                    break
+                checked += 1
                 if item.is_file() and item.suffix in ['.png', '.txt', '.mp4']:
                     # Found a task file, find the _task directory in its path
                     current = item.parent
@@ -220,8 +267,9 @@ def process_task(task):
                     
                     # Only map to global ID if directory has files
                     # Map to global ID: start_index + local_index
-                    global_task_id = str(start_index + local_index)
-                    sample_id = global_task_id
+                    global_task_id_int = start_index + local_index
+                    # Format as zero-padded 5-digit string (e.g., 1 -> "00001", 12 -> "00012", 123 -> "00123")
+                    sample_id = f"{global_task_id_int:05d}"
                     local_index += 1
                     
                     print(f"Mapping local task {original_task_id} to global ID {sample_id} (start_index={start_index})")
@@ -245,10 +293,13 @@ def process_task(task):
                         # Delete the now-empty directory
                         try:
                             task_id_dir.rmdir()
-                            print(f"Deleted local directory: {task_id_dir}")
                         except Exception as e:
                             # Directory might not be empty or already deleted
                             pass
+                        
+                        # Force garbage collection after each sample to free memory
+                        if local_index % 10 == 0:
+                            gc.collect()
                     except Exception as e:
                         print(f"Error processing {sample_id}: {e}")
                         raise
@@ -257,36 +308,27 @@ def process_task(task):
             print(f"Warning: No task directories with files found in {questions_dir}")
             raise ValueError(f"No task files found in output directory: {questions_dir}")
     else:
-        # More detailed error message
+        # Simplified error message to save memory
         error_msg = f"Cannot process output: questions_dir={questions_dir}\n"
         error_msg += f"Output directory exists: {output_path.exists()}\n"
-        if output_path.exists():
-            error_msg += f"Output directory contents:\n"
-            try:
-                items = list(output_path.rglob('*'))
-                if items:
-                    for item in items[:50]:  # Limit to first 50 items
-                        if item.is_dir():
-                            error_msg += f"  DIR:  {item}\n"
-                        elif item.is_file():
-                            error_msg += f"  FILE: {item}\n"
-                    if len(items) > 50:
-                        error_msg += f"  ... and {len(items) - 50} more items\n"
-                else:
-                    error_msg += f"  (directory is empty)\n"
-            except Exception as e:
-                error_msg += f"  Error listing contents: {e}\n"
-        else:
+        if not output_path.exists():
             error_msg += f"Output directory {output_dir} does not exist.\n"
         error_msg += f"This usually means the generator did not produce any output files.\n"
         print(error_msg)
         raise ValueError(error_msg)
     
-    # Cleanup
-    if os.path.exists(output_dir):
-        shutil.rmtree(output_dir, ignore_errors=True)
+    # Cleanup - remove entire output directory
+    try:
+        if os.path.exists(output_dir):
+            shutil.rmtree(output_dir, ignore_errors=True)
+            print(f"Cleaned up output directory: {output_dir}")
+    except Exception as e:
+        print(f"Warning: Failed to clean up {output_dir}: {e}")
     
-    print(f"Completed: {task_type} - uploaded {len(uploaded_samples)} samples")
+    # Force final garbage collection
+    gc.collect()
+    
+    print(f"Batch complete: uploaded {len(uploaded_samples)} samples")
     
     return {
         'generator': task_type,
