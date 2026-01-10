@@ -386,3 +386,35 @@ Node 19 is EOL. Upgrade to Node 20+:
 ```bash
 brew install node@20
 ```
+
+## Generator Memory Comparison
+
+G- and O- generators have different memory characteristics:
+
+### G- Generator (Memory Intensive)
+
+```
+┌─────────────────────────────────────┐
+│  Frame 1 → Frame 2 → ... → Frame N  │  ← Video requires all frames in memory
+│  + Physics state + Object history   │  ← Cumulative memory
+└─────────────────────────────────────┘
+```
+
+- **Video/Animation**: spinning objects, combined movements
+- **Physics simulation**: jenga, bounces
+- **Path planning**: grid search, shortest path
+- **Batch size**: 100-500 (configured in `generator_config.json`)
+
+### O- Generator (Memory Friendly)
+
+```
+┌─────────────────────────────────────┐
+│  Input → Process → Output           │  ← Single-pass processing
+│  (No state accumulation)            │  ← Stable memory
+└─────────────────────────────────────┘
+```
+
+- **Static images**: puzzles (nonogram, sudoku, maze)
+- **Simple transforms**: color change, rotation, scaling
+- **Logic tasks**: logic gates, sequences
+- **Batch size**: 1000 (default)
