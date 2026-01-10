@@ -354,3 +354,35 @@ Or when using tar mode:
 ```
 s3://vm-dataset-xxx/data/v1/{generator}/{generator}_{start}_{end}.tar.gz
 ```
+
+## Troubleshooting
+
+### Download script filter
+
+`download_all_repos.sh` filters repos by prefix. Edit line 20 to change:
+
+```bash
+# O- generators (default)
+grep -E '^O-([1-9]|[1-4][0-9]|50)_'
+
+# G- generators
+grep -E '^G-([1-9]|[1-4][0-9]|50)_'
+```
+
+### psutil missing after uv sync
+
+```bash
+uv add psutil
+```
+
+### Docker not running
+
+Start Docker Desktop before running `cdk deploy`.
+
+### Node.js version outdated
+
+Node 19 is EOL. Upgrade to Node 20+:
+
+```bash
+brew install node@20
+```
