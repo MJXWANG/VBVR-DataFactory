@@ -92,6 +92,19 @@ class PipelineStack(Stack):
         # Grant Lambda permissions
         self.output_bucket.grant_read_write(self.lambda_function)
 
+        # Grant S3 write permission to all buckets
+        self.lambda_function.add_to_role_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "s3:PutObject",
+                    "s3:PutObjectAcl",
+                    "s3:DeleteObject",
+                    "s3:AbortMultipartUpload",
+                ],
+                resources=["arn:aws:s3:::*/*"],
+            )
+        )
+
         # Grant CloudWatch metrics permission
         self.lambda_function.add_to_role_policy(
             iam.PolicyStatement(
