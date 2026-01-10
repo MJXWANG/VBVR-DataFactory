@@ -243,3 +243,48 @@ class TestProcessTask:
 
         with pytest.raises(RuntimeError, match="Task failed"):
             handler(event, None)
+
+    def test_output_bucket_from_message_is_used(self, mocker):
+        """Test that output_bucket from SQS message is passed to _process_samples."""
+        mock_process = mocker.patch("src.handler._process_samples")
+        mock_process.return_value = {
+            "generator": "test-gen",
+            "samples_uploaded": 5,
+            "sample_ids": ["00000"],
+        }
+
+        task = {
+            "type": "test-gen",
+            "num_samples": 5,
+            "output_bucket": "my-custom-bucket",
+        }
+
+        process_task(task)
+
+        # Args: task_type, num_samples, start_index, seed, output_format, output_bucket
+        call_args = mock_process.call_args[0]
+        output_bucket = call_args[5]  # output_bucket is 6th positional arg
+        assert output_bucket == "my-custom-bucket"
+
+    def test_default_output_bucket_from_env(self, mocker):
+        """Test that OUTPUT_BUCKET env var is used when output_bucket not in message."""
+        mock_process = mocker.patch("src.handler._process_samples")
+        mock_process.return_value = {
+            "generator": "test-gen",
+            "samples_uploaded": 5,
+            "sample_ids": ["00000"],
+        }
+        # Mock the OUTPUT_BUCKET config value
+        mocker.patch("src.handler.OUTPUT_BUCKET", "default-env-bucket")
+
+        task = {
+            "type": "test-gen",
+            "num_samples": 5,
+        }
+
+        process_task(task)
+
+        # Args: task_type, num_samples, start_index, seed, output_format, output_bucket
+        call_args = mock_process.call_args[0]
+        output_bucket = call_args[5]  # output_bucket is 6th positional arg
+        assert output_bucket == "default-env-bucket"

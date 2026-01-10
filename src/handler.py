@@ -30,6 +30,7 @@ def handler(event: dict, context: Any) -> dict:
         "num_samples": 100,      // recommended <= 100
         "seed": 42,              // optional, random if not provided
         "output_format": "files" // optional, "files" (default) or "tar"
+        "output_bucket": "my-bucket" // optional, uses OUTPUT_BUCKET env var if not provided
     }
 
     Args:
@@ -73,6 +74,7 @@ def process_task(task: dict) -> dict:
     start_index = task.get("start_index", 0)
     seed = task.get("seed")
     output_format = task.get("output_format", "files")
+    output_bucket = task.get("output_bucket", OUTPUT_BUCKET)
 
     # Validate output_format
     if output_format not in ("files", "tar"):
@@ -85,7 +87,7 @@ def process_task(task: dict) -> dict:
 
     try:
         with track_duration(task_type):
-            result = _process_samples(task_type, num_samples, start_index, seed, output_format)
+            result = _process_samples(task_type, num_samples, start_index, seed, output_format, output_bucket)
 
         # Success metrics
         put_metric("TaskSuccess", 1, "Count", task_type)
@@ -108,6 +110,7 @@ def _process_samples(
     start_index: int,
     seed: int,
     output_format: str = "files",
+    output_bucket: str = "",
 ) -> dict:
     """
     Process samples for a generator task.
@@ -118,6 +121,7 @@ def _process_samples(
         start_index: Starting index for global IDs
         seed: Random seed
         output_format: Output format - "files" (default) or "tar"
+        output_bucket: S3 bucket name for output
 
     Returns:
         Result dictionary with samples uploaded and sample IDs
@@ -169,7 +173,7 @@ def _process_samples(
                             domain_task_dir=domain_task_dir,
                             renamed_samples=renamed_samples,
                             task_type=task_type,
-                            bucket=OUTPUT_BUCKET,
+                            bucket=output_bucket,
                             start_index=start_index,
                             output_format=output_format,
                         )

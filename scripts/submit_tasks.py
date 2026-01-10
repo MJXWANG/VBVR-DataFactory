@@ -125,7 +125,12 @@ def get_batch_size_for_generator(generator: str, default_batch_size: int) -> int
 
 
 def create_task_messages(
-    generator: str, total_samples: int, batch_size: int, seed: int, output_format: str = "files"
+    generator: str,
+    total_samples: int,
+    batch_size: int,
+    seed: int,
+    output_format: str = "files",
+    output_bucket: str | None = None,
 ) -> List[Dict]:
     """
     Create SQS message entries for a generator.
@@ -136,6 +141,7 @@ def create_task_messages(
         batch_size: Number of samples per Lambda invocation (used as default)
         seed: Random seed
         output_format: Output format - "files" or "tar"
+        output_bucket: Optional S3 bucket name for output
 
     Returns:
         List of message dictionaries
@@ -147,18 +153,21 @@ def create_task_messages(
         # Each message gets a unique seed derived from base seed and index
         message_seed = (seed + idx) % (2**31)
 
+        task_body = {
+            "type": generator,
+            "start_index": start,
+            "num_samples": num_samples,
+            "seed": message_seed,
+            "output_format": output_format,
+        }
+
+        if output_bucket:
+            task_body["output_bucket"] = output_bucket
+
         messages.append(
             {
                 "Id": f"{generator}_{start}",
-                "MessageBody": json.dumps(
-                    {
-                        "type": generator,
-                        "start_index": start,
-                        "num_samples": num_samples,
-                        "seed": message_seed,
-                        "output_format": output_format,
-                    }
-                ),
+                "MessageBody": json.dumps(task_body),
             }
         )
 
@@ -219,6 +228,7 @@ def submit_tasks(
     dry_run: bool = False,
     verbose: bool = False,
     output_format: str = "files",
+    output_bucket: str | None = None,
 ) -> Dict:
     """
     Submit generation tasks to SQS.
@@ -231,6 +241,7 @@ def submit_tasks(
         dry_run: If True, don't actually send messages
         verbose: Enable verbose logging
         output_format: Output format - "files" or "tar"
+        output_bucket: Optional S3 bucket name for output
 
     Returns:
         Dictionary with submission statistics
@@ -307,7 +318,7 @@ def submit_tasks(
             print_info(f"Starting generator: {generator}")
 
         # Create messages for this generator
-        all_messages = create_task_messages(generator, total_samples, batch_size, seed, output_format)
+        all_messages = create_task_messages(generator, total_samples, batch_size, seed, output_format, output_bucket)
 
         if verbose:
             print_info(f"Created {len(all_messages)} task messages for {generator}")
@@ -443,6 +454,9 @@ Environment Variables:
     parser.add_argument(
         "--output-format", choices=["files", "tar"], default="files", help='Output format: "files" (default) or "tar"'
     )
+    parser.add_argument(
+        "--bucket", default=None, help="Override S3 bucket for output (default: uses Lambda env var OUTPUT_BUCKET)"
+    )
 
     args = parser.parse_args()
 
@@ -486,6 +500,7 @@ Environment Variables:
             dry_run=args.dry_run,
             verbose=args.verbose,
             output_format=args.output_format,
+            output_bucket=args.bucket,
         )
 
         # Print statistics
