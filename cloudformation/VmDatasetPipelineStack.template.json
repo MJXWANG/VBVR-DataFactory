@@ -201,7 +201,7 @@
      }
     },
     "FunctionName": "vm-dataset-pipeline-generator",
-    "MemorySize": 10240,
+    "MemorySize": 3008,
     "PackageType": "Image",
     "Role": {
      "Fn::GetAtt": [
