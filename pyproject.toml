@@ -18,7 +18,7 @@ dev = [
     "ruff>=0.1.0,<1.0.0",
     "fastapi>=0.100.0,<1.0.0",
     "uvicorn>=0.20.0,<1.0.0",
-    "psutil>=7.2.1",
+    "psutil>=5.9.0",
 ]
 cdk = [
     "aws-cdk-lib>=2.170.0,<3.0.0",
@@ -50,6 +50,7 @@ build-backend = "hatchling.build"
 [dependency-groups]
 dev = [
     "pre-commit>=4.5.1",
+    "psutil>=7.2.1",
 ]
 
 [tool.hatch.build.targets.wheel]
