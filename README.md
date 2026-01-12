@@ -45,6 +45,9 @@
 </a>
 
 <br>
+
+> ⚠️ **Stack name must be lowercase** (e.g., `vm-data-wheel`). Uppercase letters will cause deployment to fail.
+
 <br>
 
 | 🪣 S3 Bucket | 📬 SQS Queue | ⚡ Lambda (3GB) | 🔁 DLQ |
