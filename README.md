@@ -20,12 +20,79 @@
 </p>
 
 <p align="center">
+  <a href="#-one-click-deploy">Deploy</a> •
   <a href="#-what-is-vm-data-wheel">What is it?</a> •
   <a href="#-quick-start">Quick Start</a> •
-  <a href="#-why-use-this">Why use this?</a> •
   <a href="#-example-generators">Examples</a> •
   <a href="#-documentation">Docs</a>
 </p>
+
+<br>
+
+---
+
+<br>
+
+## ☁️ One-Click Deploy
+
+<table>
+<tr>
+<td>
+
+### Deploy to your AWS account in minutes
+
+No installation required. Click the button below to launch the infrastructure:
+
+<br>
+
+<p align="center">
+  <a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json">
+    <img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png" alt="Launch Stack" />
+  </a>
+</p>
+
+<br>
+
+**What gets created:**
+
+| Resource | Description |
+|----------|-------------|
+| 🪣 **S3 Bucket** | Stores generated data |
+| 📬 **SQS Queue** | Task distribution |
+| ⚡ **Lambda Function** | Runs generators (10GB RAM) |
+| 🔁 **Dead Letter Queue** | Failed task retry |
+
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>📋 After deployment</b></summary>
+
+<br>
+
+1. **Get the outputs** from CloudFormation console:
+   - `QueueUrl` — SQS queue for submitting tasks
+   - `BucketName` — S3 bucket for output data
+
+2. **Submit tasks:**
+```bash
+# Download the script
+curl -O https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/scripts/submit_tasks.py
+
+# Submit tasks
+python submit_tasks.py \
+  --queue-url <YOUR_QUEUE_URL> \
+  --generator all \
+  --samples 10000
+```
+
+3. **Download results:**
+```bash
+aws s3 sync s3://<YOUR_BUCKET_NAME> ./results
+```
+
+</details>
 
 <br>
 
@@ -89,6 +156,8 @@ Each generated sample includes:
 
 ## 🚀 Quick Start
 
+> **Note:** This section is for developers who want to modify the code. For simple deployment, use [One-Click Deploy](#-one-click-deploy) above.
+
 ### Prerequisites
 
 | Tool | Installation |
@@ -103,8 +172,8 @@ Each generated sample includes:
 
 ```bash
 # Clone
-git clone https://github.com/LianyuHuang/vm-dataset-pipeline
-cd vm-dataset-pipeline
+git clone https://github.com/Video-Reason/VMDataWheel
+cd VMDataWheel
 
 # Install dependencies
 uv sync --extra dev --extra cdk
@@ -267,7 +336,7 @@ Configure batch sizes per generator in `scripts/generator_config.json`.
 
 | Parameter | Value |
 |-----------|-------|
-| Memory | 3 GB |
+| Memory | 10 GB |
 | Timeout | 15 min |
 | Runtime | Python 3.11 (Container) |
 
@@ -388,6 +457,8 @@ vm-data-wheel/
 │   └── config.py                 # Configuration
 ├── cdk/                          # CDK infrastructure
 │   └── stacks/pipeline_stack.py  # Lambda, SQS, S3 definitions
+├── cloudformation/               # One-click deploy template
+│   └── VmDatasetPipelineStack.template.json
 ├── scripts/                      # CLI utilities
 │   ├── submit_tasks.py           # Task submission
 │   ├── sqs_monitor.py            # Queue monitoring
