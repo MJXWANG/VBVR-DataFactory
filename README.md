@@ -107,7 +107,6 @@ Each generated sample includes:
 ├── first_frame.png      # Initial state image
 ├── final_frame.png      # Target state image
 ├── prompt.txt           # Task description
-├── rubric.txt           # Evaluation criteria
 └── ground_truth.mp4     # Solution video (optional)
 ```
 
@@ -143,7 +142,7 @@ Each generated sample includes:
 
 ## 🚀 Quick Start
 
-> **Note:** This section is for developers who want to modify the code. For simple deployment, use [One-Click Deploy](#-one-click-deploy) above.
+> **Note:** This section is for developers who want to modify the code. For simple deployment, use [One-Click Deploy](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json) above.
 
 <br>
 

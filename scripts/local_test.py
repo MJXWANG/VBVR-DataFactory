@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 
 # Expected output structure
 REQUIRED_FILES = {"first_frame.png", "prompt.txt"}
-OPTIONAL_FILES = {"final_frame.png", "rubric.txt", "ground_truth.mp4"}
+OPTIONAL_FILES = {"final_frame.png", "ground_truth.mp4"}
 ALL_VALID_FILES = REQUIRED_FILES | OPTIONAL_FILES
 
 
