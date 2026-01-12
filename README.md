@@ -47,7 +47,7 @@
 <br>
 <br>
 
-| 🪣 S3 Bucket | 📬 SQS Queue | ⚡ Lambda (10GB) | 🔁 DLQ |
+| 🪣 S3 Bucket | 📬 SQS Queue | ⚡ Lambda (3GB) | 🔁 DLQ |
 |:------------:|:------------:|:----------------:|:------:|
 | Output storage | Task queue | 50+ generators | Auto-retry |
 
