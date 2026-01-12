@@ -141,14 +141,7 @@ Each generated sample includes:
 ---
 
 ## 🚀 Quick Start
-
-> **Note:** This section is for developers who want to modify the code. For simple deployment, use [One-Click Deploy](https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json) above.
-
-<br>
-
-<a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json">
-  <img src="https://s3.amazonaws.com/cloudformation-examples/cloudformation-launch-stack.png" alt="Launch Stack" height="40" />
-</a>
+> **Note:** This section is for developers who want to modify the code.
 
 <br>
 
