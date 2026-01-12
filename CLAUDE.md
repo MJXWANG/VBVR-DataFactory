@@ -2,7 +2,25 @@
 
 ## Overview
 
-AWS Lambda pipeline for generating VM dataset samples. Uses SQS for task distribution and S3 for output storage.
+**VM Data Wheel** — Serverless data generation for video reasoning models.
+
+- One-click deploy via CloudFormation (no local setup required for users)
+- Developers use CDK for infrastructure changes
+- Lambda generates samples from SQS tasks, outputs to S3
+
+## Architecture
+
+```
+CloudFormation → Submit Lambda → SQS Queue → Generator Lambda → S3 Bucket
+                                    ↓
+                                   DLQ (failed tasks)
+```
+
+**Key Resources:**
+- `{stack-name}-submit-tasks` — Lambda to batch-submit tasks
+- `{stack-name}-queue` — SQS task queue
+- `{stack-name}-generator` — Lambda with 50+ generators (Docker image)
+- `{stack-name}-output-{account-id}` — S3 output bucket
 
 ## Tech Stack
 
@@ -11,70 +29,103 @@ AWS Lambda pipeline for generating VM dataset samples. Uses SQS for task distrib
 - AWS CDK for infrastructure
 - pytest for testing
 - Ruff for linting/formatting
-- pre-commit for git hooks
 
 ## Commands
 
-**Always use `uv run` for Python commands** (no system Python):
+**Always use `uv run`** (no system Python):
 
 ```bash
-uv sync --extra dev --extra cdk          # Install dependencies
-uv run pre-commit install                 # Install git hooks
-uv run pytest                             # Run tests
-uv run ruff check src/ scripts/           # Lint
-uv run ruff format src/ scripts/          # Format
-uv run cdk deploy --profile <profile>     # Deploy (CDK needs --profile)
-uv run python scripts/submit_tasks.py ... # Run scripts
+uv sync --extra dev --extra cdk     # Install dependencies
+uv run pytest                        # Run tests
+uv run ruff check src/ scripts/      # Lint
+uv run ruff format src/ scripts/     # Format
+uv run cdk deploy                    # Deploy (set AWS_PROFILE first)
 ```
 
 ## Code Style
 
 - Line length: 120 characters
-- Use type hints for function signatures
-- Use f-strings for string formatting
-- Use `logging` module instead of `print()` in `src/`
-- No Chinese text in code or documentation
-- All content in packages must be in English
+- Type hints for function signatures
+- f-strings for formatting
+- `logging` module in `src/` (not `print()`)
+- All code and docs in English
 
 ## Project Structure
 
 ```
-src/           # Lambda source code (handler, generator, uploader, utils)
-scripts/       # CLI utilities (submit_tasks, sqs_monitor, test_server, etc.)
-  static/      # Web UI static files (index.html, app.js)
-cdk/           # CDK infrastructure code
-tests/         # pytest tests
-generators/    # Generator repos (gitignored, downloaded via scripts)
+src/              # Lambda source (handler, generator, uploader)
+cdk/              # CDK infrastructure
+cloudformation/   # One-click deploy template (generated from CDK)
+scripts/          # CLI utilities
+  static/         # Web UI files
+tests/            # pytest tests
+generators/       # Generator repos (gitignored)
 ```
+
+## Key Files
+
+| File | Purpose |
+|------|---------|
+| `cloudformation/VmDatasetPipelineStack.template.json` | One-click deploy template |
+| `cdk/stacks/pipeline_stack.py` | CDK stack definition |
+| `src/handler.py` | Lambda entry point |
+| `src/generator.py` | Generator execution logic |
+| `scripts/generator_config.json` | Per-generator batch size config |
+| `requirements-all.txt` | Merged generator dependencies |
 
 ## Dependencies
 
-- `pyproject.toml` - Pipeline dependencies (boto3, pytest, cdk, etc.)
-- `requirements-all.txt` - All generator dependencies merged together
+- `pyproject.toml` — Pipeline dependencies
+- `requirements-all.txt` — All generator dependencies (for Docker image)
 
-The Docker image includes all generator dependencies because a single Lambda instance may run any generator. Use `scripts/collect_requirements.sh` to update `requirements-all.txt` when generators change.
+Run `scripts/collect_requirements.sh` to update `requirements-all.txt` when generators change.
 
 ## Testing
 
-- Run `uv run pytest` after making changes
-- New features require tests
-- Tests are in `tests/unit/`
-
-## Local Generator Testing
-
 ```bash
-uv run python scripts/test_server.py    # Web UI at http://localhost:8000
-uv run python scripts/local_test.py     # CLI testing
+uv run pytest                              # Unit tests
+uv run python scripts/test_server.py       # Web UI at :8000
+uv run python scripts/local_test.py        # CLI testing
 ```
 
 ## Deployment
 
-After code changes, redeploy Lambda:
-
+**For CDK deploy (developers):**
 ```bash
-uv run cdk deploy --profile <profile>    # Rebuilds Docker image and updates Lambda
+export AWS_PROFILE=your-profile
+uv run cdk deploy
+```
+
+**To update CloudFormation template:**
+```bash
+uv run cdk synth
+cp cdk.out/VmDatasetPipelineStack.template.json cloudformation/
+```
+
+Note: The template contains a hardcoded ECR image URI from account `956728988776`. Cross-account pull permissions are configured on the ECR repo.
+
+## Generator Types
+
+| Prefix | Type | Memory |
+|--------|------|--------|
+| `O-` | Static/Logic (puzzles, counting) | Low |
+| `G-` | Dynamic/Physics (animation, simulation) | High |
+
+G-generators accumulate frames in memory. Adjust batch sizes in `scripts/generator_config.json`.
+
+## Task Message Format
+
+```json
+{
+  "type": "O-41_nonogram_data-generator",
+  "start_index": 0,
+  "num_samples": 25,
+  "seed": 42,
+  "output_format": "tar"
+}
 ```
 
 ## Git
 
-- Do not include "Co-Authored-By" or AI-generated descriptions in commits
+- No "Co-Authored-By" or AI-generated descriptions in commits
+- Keep commits focused and descriptive
