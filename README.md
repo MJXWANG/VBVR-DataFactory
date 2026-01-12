@@ -1,4 +1,4 @@
-# 🎬 VM Dataset Pipeline
+# 🎬 VM Data Wheel
 
 **Scalable data generation for video reasoning models.**
 
