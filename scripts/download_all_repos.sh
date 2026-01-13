@@ -14,10 +14,10 @@ OUTPUT_DIR="../generators"
 
 mkdir -p "$OUTPUT_DIR"
 
-echo "Downloading all repos from $ORG..."
+echo "Downloading all O- and G- generator repos from $ORG..."
 
-# Filter: Both O- and G- generators (1 to 50)
-repos=$(gh repo list $ORG --limit 300 --json name -q '.[].name' | grep -E '^(O|G)-([1-9]|[1-4][0-9]|50)_')
+# Filter: All O- and G- generators (any number)
+repos=$(gh repo list $ORG --limit 1000 --json name -q '.[].name' | grep -E '^(O|G)-[0-9]+_')
 
 total=$(echo "$repos" | wc -l | tr -d ' ')
 count=0

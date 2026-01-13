@@ -1,4 +1,4 @@
-<h1 align="center">VM Data Wheel</h1>
+<h1 align="center" style="font-size: 3.5em; font-weight: bold;">VM Data Wheel</h1>
 
 <p align="center">
   <b>Scalable data generation for video reasoning models using AWS Lambda.</b>
@@ -20,19 +20,31 @@
   <a href="#-architecture-overview">Docs</a>
 </p>
 
+**VM Data Wheel** is a distributed data generation system built on AWS Lambda. It orchestrates 300+ generators from the [vm-dataset](https://github.com/vm-dataset) project to create high-quality training data for video reasoning models.
+
+
+```mermaid
+graph LR
+    A[CloudFormation] --> B[Submit Lambda]
+    B --> C[(SQS Queue)]
+    C --> D[Generator Lambda]
+    C -.-> E[(DLQ)]
+    D --> F[(S3 Bucket)]
+```
+
 ---
 
 <div align="center">
 
 ## One-Click Deploy
 
-**🔜 Coming Soon**
-
 **Deploy to your AWS account in minutes — no local setup required.**
 
 <a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json">
   <img src="https://img.shields.io/badge/🚀_DEPLOY_NOW-00C853?style=for-the-badge" alt="Deploy Now" />
 </a>
+
+**🔜 Coming Soon**
 
 | S3 Bucket | SQS Queue | Lambda | DLQ |
 |:---------:|:---------:|:------:|:---:|
@@ -85,10 +97,6 @@ aws s3 sync s3://{stack-name}-output-{account-id} ./results
 ```
 
 </details>
-
----
-
-**VM Data Wheel** is a distributed data generation system built on AWS Lambda. It orchestrates 300+ generators from the [vm-dataset](https://github.com/vm-dataset) project to create high-quality training data for video reasoning models.
 
 ---
 
@@ -150,7 +158,7 @@ cd scripts
 ./download_all_repos.sh
 cd ..
 
-# This downloads 50+ generators to ./generators/
+# This downloads all O- and G- generators from vm-dataset to ./generators/
 ```
 
 ### Step 5: Deploy Infrastructure to AWS
@@ -275,7 +283,7 @@ python scripts/monitor.py --watch --interval 10
 ```bash
 # Only O- generators (puzzles, logic)
 # First, edit scripts/download_all_repos.sh line 20:
-# Change to: grep -E '^O-([1-9]|[1-4][0-9]|50)_'
+# Change to: grep -E '^O-[0-9]+_'
 cd scripts && ./download_all_repos.sh && cd ..
 
 # Then submit tasks
@@ -337,7 +345,7 @@ When you run `cdk deploy`, it creates:
 
 1. **S3 Bucket** - Stores generated data
 2. **SQS Queue** - Distributes tasks to workers
-3. **Lambda Function** - Runs generators (10GB memory, 15min timeout)
+3. **Lambda Function** - Runs generators (3GB memory, 15min timeout)
 4. **Dead Letter Queue** - Captures failed tasks for retry
 5. **IAM Roles** - Permissions for Lambda to access S3/SQS
 
@@ -399,7 +407,7 @@ Edit `deployment/cdk.json` to adjust:
 ```json
 {
   "context": {
-    "lambdaMemoryMB": 10240,           // 10 GB
+    "lambdaMemoryMB": 3072,            // 3 GB
     "lambdaTimeoutMinutes": 15,        // 15 minutes
     "sqsMaxConcurrency": 990           // Max parallel Lambdas
   }
