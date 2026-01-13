@@ -34,10 +34,8 @@
   <img src="https://img.shields.io/badge/🚀_DEPLOY_NOW-00C853?style=for-the-badge" alt="Deploy Now" />
 </a>
 
-**Stack name must be lowercase** (e.g., `vm-data-wheel`)
-
-| S3 Bucket | SQS Queue | Lambda (3GB) | DLQ |
-|:---------:|:---------:|:------------:|:---:|
+| S3 Bucket | SQS Queue | Lambda | DLQ |
+|:---------:|:---------:|:------:|:---:|
 | Output storage | Task queue | 300+ generators | Auto-retry |
 
 </div>
