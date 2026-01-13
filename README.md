@@ -28,13 +28,11 @@
 
 **Deploy to your AWS account in minutes — no local setup required.**
 
-**🔜 Coming Soon**
-
-<!-- 
 <a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json">
   <img src="https://img.shields.io/badge/🚀_DEPLOY_NOW-00C853?style=for-the-badge" alt="Deploy Now" />
 </a>
--->
+
+**🔜 Coming Soon**
 
 </div>
 
