@@ -105,22 +105,37 @@ aws s3 sync s3://{stack-name}-output-{account-id} ./results
 ### Step 1: Install Prerequisites
 
 ```bash
-# Install Python 3.11+ (if not already installed)
+# Verify Python 3.11+ (required)
 python3 --version  # Should be 3.11 or higher
 
 # Install UV (Python package manager)
 curl -LsSf https://astral.sh/uv/install.sh | sh
+# If `uv` is not found after install:
+source "$HOME/.local/bin/env"
 
-# Install AWS CLI
-brew install awscli  # macOS
-# or: pip install awscli
+# --- macOS (Homebrew) ---
+# brew install awscli
+# brew install gh
+# Install Docker Desktop from: https://www.docker.com/products/docker-desktop/
 
-# Install GitHub CLI
-brew install gh  # macOS
-# or: https://cli.github.com/
-
-# Install Docker Desktop
-# Download from: https://www.docker.com/products/docker-desktop/
+# --- Ubuntu/Debian (apt) ---
+# sudo apt update
+# sudo apt install -y curl unzip git
+#
+# AWS CLI:
+# Option A (usually v1): sudo apt install -y awscli
+# Option B (v2, recommended):
+#   curl -L "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o awscliv2.zip
+#   unzip -q awscliv2.zip
+#   sudo ./aws/install
+#
+# GitHub CLI:
+# sudo apt install -y gh
+# (If `gh` isn't available in your distro repos, install from https://cli.github.com/)
+#
+# Docker:
+# Install Docker Engine (Linux) or Docker Desktop (macOS/Windows).
+# See: https://docs.docker.com/engine/install/
 ```
 
 ### Step 2: Configure AWS
@@ -164,7 +179,9 @@ cd ..
 ### Step 5: Deploy Infrastructure to AWS
 
 ```bash
-# Make sure Docker Desktop is running first!
+# Make sure Docker is running first!
+# - macOS/Windows: Docker Desktop
+# - Linux: Docker Engine (dockerd)
 
 # Navigate to deployment directory
 cd deployment
@@ -478,7 +495,9 @@ cd scripts
 
 **Error:** `Cannot connect to the Docker daemon`
 
-**Solution:** Start Docker Desktop application
+**Solution:**
+- macOS/Windows: Start Docker Desktop
+- Linux: Start Docker Engine (e.g., `sudo systemctl start docker`)
 
 ### Module Not Found
 
@@ -527,7 +546,14 @@ cd ..
 
 **Solution:**
 ```bash
-brew install node@20
+# macOS (Homebrew):
+# brew install node@20
+#
+# Ubuntu/Debian:
+# sudo apt update
+# sudo apt install -y nodejs npm
+#
+# If your distro Node is too old, prefer installing Node 20 via nvm or NodeSource.
 ```
 
 ---
