@@ -26,21 +26,73 @@
 
 ## One-Click Deploy
 
+**🔜 Coming Soon**
+
 **Deploy to your AWS account in minutes — no local setup required.**
 
 <a href="https://console.aws.amazon.com/cloudformation/home?#/stacks/new?stackName=vm-data-wheel&templateURL=https://raw.githubusercontent.com/Video-Reason/VMDataWheel/main/cloudformation/VmDatasetPipelineStack.template.json">
   <img src="https://img.shields.io/badge/🚀_DEPLOY_NOW-00C853?style=for-the-badge" alt="Deploy Now" />
 </a>
 
-**🔜 Coming Soon**
+> **Stack name must be lowercase** (e.g., `vm-data-wheel`)
+
+| S3 Bucket | SQS Queue | Lambda (3GB) | DLQ |
+|:---------:|:---------:|:------------:|:---:|
+| Output storage | Task queue | 300+ generators | Auto-retry |
 
 </div>
+
+<details>
+<summary><b>After deployment — How to use</b></summary>
+
+<br>
+
+**Option 1: Invoke Submit Lambda (Recommended)**
+
+Go to AWS Console → Lambda → `{stack-name}-submit-tasks` → Test with:
+
+```json
+{
+  "generators": ["O-41_nonogram_data-generator", "O-42_object_permanence_data-generator"],
+  "samples": 10000,
+  "batch_size": 25
+}
+```
+
+Or use AWS CLI:
+```bash
+aws lambda invoke \
+  --function-name vm-data-wheel-submit-tasks \
+  --payload '{"samples": 10000}' \
+  response.json
+```
+
+**Option 2: Send SQS Messages Directly**
+
+Go to AWS Console → SQS → `{stack-name}-queue` → Send message:
+
+```json
+{
+  "type": "O-41_nonogram_data-generator",
+  "start_index": 0,
+  "num_samples": 25,
+  "seed": 42,
+  "output_format": "tar"
+}
+```
+
+**Download results:**
+```bash
+aws s3 sync s3://{stack-name}-output-{account-id} ./results
+```
+
+</details>
 
 ---
 
 ## What is VM Data Wheel?
 
-**VM Data Wheel** is a distributed data generation system built on AWS Lambda. It orchestrates 100+ generators from the [vm-dataset](https://github.com/vm-dataset) project to create high-quality training data for video reasoning models.
+**VM Data Wheel** is a distributed data generation system built on AWS Lambda. It orchestrates 300+ generators from the [vm-dataset](https://github.com/vm-dataset) project to create high-quality training data for video reasoning models.
 
 **Pip-installable package with Pydantic validation and modular architecture.**
 
