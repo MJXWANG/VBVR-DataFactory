@@ -70,7 +70,7 @@ class PipelineStack(Stack):
         )
 
         # Lambda configuration from context
-        lambda_memory = self.node.try_get_context("lambdaMemoryMB") or 10240
+        lambda_memory = self.node.try_get_context("lambdaMemoryMB") or 3072
         lambda_timeout = self.node.try_get_context("lambdaTimeoutMinutes") or 15
 
         # Lambda Function

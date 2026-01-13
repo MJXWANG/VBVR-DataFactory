@@ -17,7 +17,7 @@
     "@aws-cdk/aws-lambda:recognizeLayerVersion": true,
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/core:target-partitions": ["aws", "aws-cn"],
-    "lambdaMemoryMB": 10240,
+    "lambdaMemoryMB": 3072,
     "lambdaTimeoutMinutes": 15,
     "sqsMaxConcurrency": 990
   }
