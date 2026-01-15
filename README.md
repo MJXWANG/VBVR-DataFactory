@@ -143,6 +143,27 @@ questions/
 - **Instances:** `{task-name}_0000/` - Individual samples with 4-digit zero-padded indices
 - **Files:** Each instance contains 2-4 files (first_frame.png, prompt.txt are required; final_frame.png and ground_truth.mp4 are optional)
 
+**Tar Archive Format:**
+
+When using `--output-format tar`, files are packaged into compressed archives:
+
+```
+questions/
+└── G-1_object_trajectory_data-generator_00000-00099.tar.gz
+
+# Extract to see:
+G-1_object_trajectory_data-generator/
+└── object_trajectory_task/
+    ├── object_trajectory_0000/
+    │   └── [files]
+    ├── object_trajectory_0001/
+    └── ... (through _0099)
+```
+
+- **Tar files:** `{generator}_{start-index}-{end-index}.tar.gz`
+- **Internal structure:** Preserves full `{generator}/{task}_task/{samples}/` hierarchy
+- **Benefits:** Efficient download, reduced S3 requests, maintains organization
+
 ---
 
 ## 🚀 Getting Started
@@ -337,7 +358,7 @@ python scripts/monitor.py --watch
 # Once processing is complete, download the generated data
 aws s3 sync s3://vm-dataset-123456789-us-east-2/questions/ ./results/
 
-# Results structure:
+# Results structure (files format):
 # results/
 # └── G-1_object_trajectory_data-generator/
 #     └── object_trajectory_task/
@@ -348,6 +369,10 @@ aws s3 sync s3://vm-dataset-123456789-us-east-2/questions/ ./results/
 #         │   └── ground_truth.mp4
 #         ├── object_trajectory_0001/
 #         └── ...
+
+# For tar format, download and extract:
+# aws s3 cp s3://vm-dataset-123456789-us-east-2/questions/G-1_generator_00000-00099.tar.gz .
+# tar -xzf G-1_generator_00000-00099.tar.gz
 ```
 
 ---
@@ -472,6 +497,10 @@ When you run `cdk deploy`, it creates:
   "output_format": "files"
 }
 ```
+
+**Output Format Options:**
+- `"files"` (default) - Individual files uploaded to S3 with full directory structure
+- `"tar"` - Compressed tar.gz archive per batch (e.g., `G-1_generator_00000-00099.tar.gz`)
 
 All fields are validated by Pydantic. Invalid messages are rejected immediately.
 

@@ -61,14 +61,18 @@ class S3Uploader:
         source_dir: Path,
         tar_filename: str,
         s3_key: str,
+        task_type: str,
+        task_folder: str,
     ) -> str:
         """
-        Create a tar.gz archive from a directory and upload to S3.
+        Create a tar.gz archive from a directory with proper internal structure and upload to S3.
 
         Args:
             source_dir: Path to the source directory to archive
             tar_filename: Name for the tar.gz file
             s3_key: S3 key (full path including filename)
+            task_type: Generator type name (e.g., "G-1_object_trajectory_data-generator")
+            task_folder: Task folder name (e.g., "object_trajectory_task")
 
         Returns:
             S3 URI of the uploaded file
@@ -78,10 +82,14 @@ class S3Uploader:
         """
         tar_path = Path(f"/tmp/{tar_filename}")
 
-        # Create tar archive
+        # Create tar archive with proper directory structure
+        # Structure inside tar: {generator}/{task}_task/{samples}/
         with tarfile.open(tar_path, "w:gz") as tar:
             for item in source_dir.iterdir():
-                tar.add(str(item), arcname=item.name)
+                if item.is_dir():
+                    # Add with full path structure
+                    arcname = f"{task_type}/{task_folder}/{item.name}"
+                    tar.add(str(item), arcname=arcname)
 
         logger.info(f"Created tar archive: {tar_path}")
 
@@ -129,16 +137,23 @@ class S3Uploader:
         task_folder = domain_task_dir.name
 
         if output_format == "tar":
+            # Create one tar file per batch with proper internal structure
             end_index = start_index + len(renamed_samples) - 1
-            tar_filename = f"{task_type}_{start_index}_{end_index}.tar.gz"
-            s3_key = f"questions/{task_type}/{task_folder}/{tar_filename}"
+            tar_filename = f"{task_type}_{start_index:05d}-{end_index:05d}.tar.gz"
+            s3_key = f"questions/{tar_filename}"
 
-            self.create_and_upload_tar(domain_task_dir, tar_filename, s3_key)
+            self.create_and_upload_tar(
+                domain_task_dir, 
+                tar_filename, 
+                s3_key,
+                task_type,
+                task_folder
+            )
 
             for sample_id in renamed_samples:
                 uploaded_samples.append({"sample_id": sample_id, "files_uploaded": 0})
 
-            logger.info(f"Created and uploaded tar with {len(renamed_samples)} samples to questions/{task_type}/{task_folder}/")
+            logger.info(f"Created and uploaded tar with {len(renamed_samples)} samples to questions/{tar_filename}")
             tar_file = tar_filename
         else:
             for sample_id in renamed_samples:
