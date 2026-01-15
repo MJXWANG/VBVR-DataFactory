@@ -78,19 +78,26 @@ def find_task_directories(output_path: Path) -> Path | None:
 
 def rename_samples(domain_task_dir: Path, start_index: int) -> list[str]:
     """
-    Rename sample directories to global zero-padded IDs.
+    Rename sample directories to global zero-padded IDs with task name prefix.
 
     Args:
-        domain_task_dir: Path to the domain task directory
+        domain_task_dir: Path to the domain task directory (e.g., object_trajectory_task)
         start_index: Starting index for global IDs
 
     Returns:
-        List of renamed sample IDs
+        List of renamed sample IDs (e.g., ["object_trajectory_0000", "object_trajectory_0001"])
 
     Raises:
         OSError: If rename operation fails
     """
     renamed_samples = []
+
+    # Extract task name from domain_task_dir (e.g., "object_trajectory_task" -> "object_trajectory")
+    task_dir_name = domain_task_dir.name
+    if task_dir_name.endswith("_task"):
+        task_name = task_dir_name[:-5]  # Remove "_task" suffix
+    else:
+        task_name = task_dir_name
 
     task_dirs = list(domain_task_dir.iterdir())
 
@@ -130,7 +137,7 @@ def rename_samples(domain_task_dir: Path, start_index: int) -> list[str]:
             continue
 
         global_task_id_int = start_index + local_index
-        sample_id = f"{global_task_id_int:05d}"
+        sample_id = f"{task_name}_{global_task_id_int:04d}"
 
         logger.debug(f"Mapping local task {original_task_id} to global ID {sample_id} (start_index={start_index})")
 

@@ -27,7 +27,7 @@ class S3Uploader:
 
         Args:
             local_dir: Path to local directory
-            s3_prefix: S3 key prefix (e.g., "20260113-091545/data/generator_name/sample_id/")
+            s3_prefix: S3 key prefix (e.g., "questions/G-1_generator/task_name_task/task_name_0000/")
 
         Returns:
             Number of files uploaded
@@ -106,11 +106,13 @@ class S3Uploader:
     ) -> tuple[list[dict], str | None]:
         """
         Upload renamed samples to S3, either as individual files or as a tar archive.
+        
+        New structure: questions/{generator-name}/{task-name}_task/{task-name}_0000/files
 
         Args:
-            domain_task_dir: Path to the domain task directory
-            renamed_samples: List of sample IDs to upload
-            task_type: Generator type name
+            domain_task_dir: Path to the domain task directory (e.g., object_trajectory_task)
+            renamed_samples: List of sample IDs to upload (e.g., ["object_trajectory_0000"])
+            task_type: Generator type name (e.g., "G-1_object_trajectory_data-generator")
             start_index: Starting index for samples
             output_format: Output format - "files" (default) or "tar"
 
@@ -123,31 +125,31 @@ class S3Uploader:
         uploaded_samples = []
         tar_file = None
         
-        # Generate timestamp for this upload batch
-        timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+        # Extract task folder name (e.g., "object_trajectory_task")
+        task_folder = domain_task_dir.name
 
         if output_format == "tar":
             end_index = start_index + len(renamed_samples) - 1
             tar_filename = f"{task_type}_{start_index}_{end_index}.tar.gz"
-            s3_key = f"{timestamp}/data/{task_type}/{tar_filename}"
+            s3_key = f"questions/{task_type}/{task_folder}/{tar_filename}"
 
             self.create_and_upload_tar(domain_task_dir, tar_filename, s3_key)
 
             for sample_id in renamed_samples:
                 uploaded_samples.append({"sample_id": sample_id, "files_uploaded": 0})
 
-            logger.info(f"Created and uploaded tar with {len(renamed_samples)} samples to {timestamp}/")
+            logger.info(f"Created and uploaded tar with {len(renamed_samples)} samples to questions/{task_type}/{task_folder}/")
             tar_file = tar_filename
         else:
             for sample_id in renamed_samples:
                 sample_dir = domain_task_dir / sample_id
                 if sample_dir.exists():
-                    s3_prefix = f"{timestamp}/data/{task_type}/{sample_id}/"
+                    s3_prefix = f"questions/{task_type}/{task_folder}/{sample_id}/"
                     files_uploaded = self.upload_directory(sample_dir, s3_prefix)
                     uploaded_samples.append({"sample_id": sample_id, "files_uploaded": files_uploaded})
                     logger.info(f"Uploaded sample {sample_id}: {files_uploaded} files")
 
-            logger.info(f"Uploaded {len(renamed_samples)} samples directly to {timestamp}/")
+            logger.info(f"Uploaded {len(renamed_samples)} samples directly to questions/{task_type}/{task_folder}/")
 
         return uploaded_samples, tar_file
 

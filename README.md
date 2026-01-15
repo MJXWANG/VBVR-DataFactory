@@ -93,10 +93,55 @@ Go to AWS Console → SQS → `{stack-name}-queue` → Send message:
 
 **Download results:**
 ```bash
-aws s3 sync s3://{stack-name}-output-{account-id} ./results
+# Download all generated data
+aws s3 sync s3://{stack-name}-output-{account-id}/questions/ ./results/
+
+# Results will be in:
+# ./results/G-41_generator/task_name_task/task_name_0000/
 ```
 
 </details>
+
+---
+
+## 📁 Output Structure
+
+All generated data follows this standardized structure:
+
+```
+questions/
+├── G-1_object_trajectory_data-generator/
+│   └── object_trajectory_task/
+│       ├── object_trajectory_0000/
+│       │   ├── first_frame.png
+│       │   ├── final_frame.png
+│       │   ├── ground_truth.mp4
+│       │   └── prompt.txt
+│       ├── object_trajectory_0001/
+│       │   └── [same 4 files]
+│       └── ... (continues with _0002, _0003, etc.)
+│
+├── G-2_another_generator/
+│   └── another_task/
+│       ├── another_0000/
+│       └── ...
+│
+└── O-41_nonogram_data-generator/
+    └── nonogram_task/
+        ├── nonogram_0000/
+        │   ├── first_frame.png
+        │   ├── final_frame.png
+        │   ├── ground_truth.mp4
+        │   └── prompt.txt
+        └── ... (continues with _0001, _0002, etc.)
+```
+
+**Structure breakdown:**
+- **Root:** `questions/` - All generated data
+- **Generator:** `{G|O}-{N}_{task-name}_data-generator/` - Each generator has its own folder
+- **Task:** `{task-name}_task/` - Task-specific directory
+- **Instances:** `{task-name}_0000/` - Individual samples with 4-digit zero-padded indices
+- **Files:** Each instance contains 2-4 files (first_frame.png, prompt.txt are required; final_frame.png and ground_truth.mp4 are optional)
 
 ---
 
@@ -290,18 +335,19 @@ python scripts/monitor.py --watch
 
 ```bash
 # Once processing is complete, download the generated data
-aws s3 sync s3://vm-dataset-123456789-us-east-2/data/v1/ ./results/
+aws s3 sync s3://vm-dataset-123456789-us-east-2/questions/ ./results/
 
 # Results structure:
 # results/
 # └── G-1_object_trajectory_data-generator/
-#     ├── 00000/
-#     │   ├── first_frame.png
-#     │   ├── final_frame.png
-#     │   ├── prompt.txt
-#     │   └── ground_truth.mp4
-#     ├── 00001/
-#     └── ...
+#     └── object_trajectory_task/
+#         ├── object_trajectory_0000/
+#         │   ├── first_frame.png
+#         │   ├── final_frame.png
+#         │   ├── prompt.txt
+#         │   └── ground_truth.mp4
+#         ├── object_trajectory_0001/
+#         └── ...
 ```
 
 ---
