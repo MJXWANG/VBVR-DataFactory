@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/vm-dataset">
-    <img alt="vm-dataset generators" src="https://img.shields.io/badge/generators-vm--dataset-181717?logo=github&logoColor=white" />
+  <a href="https://github.com/VBVR-DataFactory">
+    <img alt="VBVR-DataFactory generators" src="https://img.shields.io/badge/generators-VBVR--DataFactory-181717?logo=github&logoColor=white" />
   </a>
   <img alt="Python 3.11+" src="https://img.shields.io/badge/python-3.11+-3776ab?logo=python&logoColor=white" />
   <img alt="License" src="https://img.shields.io/badge/license-Apache%202.0-green" />
@@ -20,7 +20,7 @@
   <a href="#-architecture-overview">Docs</a>
 </p>
 
-**VBVR DataFactory** is a distributed data generation system built on AWS Lambda. It orchestrates 300+ generators from the [vm-dataset](https://github.com/vm-dataset) project to create high-quality training data for video reasoning models.
+**VBVR DataFactory** is a distributed data generation system built on AWS Lambda. It orchestrates 300+ generators from the [VBVR-DataFactory](https://github.com/VBVR-DataFactory) project to create high-quality training data for video reasoning models.
 
 
 ```mermaid
@@ -265,7 +265,7 @@ cd scripts
 ./download_all_repos.sh
 cd ..
 
-# This downloads all O- and G- generators from vm-dataset org to ./generators/
+# This downloads all O- and G- generators from VBVR-DataFactory org to ./generators/
 ```
 
 ### Step 5: Deploy Infrastructure to AWS
@@ -710,5 +710,5 @@ Apache-2.0
 ---
 
 <p align="center">
-  Part of the <a href="https://github.com/vm-dataset">vm-dataset</a> project
+  Part of the <a href="https://github.com/VBVR-DataFactory">VBVR-DataFactory</a> project
 </p>
