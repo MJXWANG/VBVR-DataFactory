@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Submit generation tasks to SQS using vmdatawheel package.
+"""Submit generation tasks to SQS using vbvrdatafactory package.
 
 Example:
     python scripts/submit.py --generator all --samples 10000
@@ -15,8 +15,8 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from vmdatawheel.core.config import config
-from vmdatawheel.sqs.submitter import TaskSubmitter
+from vbvrdatafactory.core.config import config
+from vbvrdatafactory.sqs.submitter import TaskSubmitter
 
 
 def get_all_generators() -> list[str]:
@@ -55,7 +55,7 @@ def main():
     # Validate environment
     if not config.sqs_queue_url:
         print("❌ SQS_QUEUE_URL environment variable not set")
-        print("   Set it first: export SQS_QUEUE_URL=https://sqs.xxx.amazonaws.com/xxx/vm-dataset-tasks")
+        print("   Set it first: export SQS_QUEUE_URL=https://sqs.xxx.amazonaws.com/xxx/vbvr-datafactory-tasks")
         sys.exit(1)
 
     # Get generators
@@ -77,7 +77,7 @@ def main():
 
     # Submit tasks
     print("\n" + "=" * 70)
-    print("VMDataWheel - Task Submission")
+    print("VBVR-DataFactory - Task Submission")
     print("=" * 70)
     print(f"\nConfiguration:")
     print(f"  Generators: {len(generators)}")
