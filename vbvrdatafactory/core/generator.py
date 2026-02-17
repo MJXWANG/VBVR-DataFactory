@@ -4,6 +4,7 @@ NO try-catch blocks - let exceptions bubble up for Lambda/SQS to handle retries.
 """
 
 import logging
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -35,7 +36,8 @@ class GeneratorRunner:
             subprocess.CalledProcessError: If help command fails
         """
         generate_script = generator_path / "examples" / "generate.py"
-        env = {"PYTHONPATH": str(generator_path.absolute())}
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(generator_path.absolute())
 
         result = subprocess.run(
             [sys.executable, str(generate_script), "--help"],
@@ -90,7 +92,8 @@ class GeneratorRunner:
         logger.info(f"Running command: {' '.join(cmd)}")
         logger.info(f"Working directory: {generator_path}")
 
-        env = {"PYTHONPATH": str(generator_path.absolute())}
+        env = os.environ.copy()
+        env["PYTHONPATH"] = str(generator_path.absolute())
 
         result = subprocess.run(
             cmd,

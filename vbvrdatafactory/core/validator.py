@@ -17,7 +17,7 @@ class SampleValidator:
     """Validates generator output."""
 
     REQUIRED_FILES = {"first_frame.png", "prompt.txt"}
-    OPTIONAL_FILES = {"final_frame.png", "ground_truth.mp4"}
+    OPTIONAL_FILES = {"final_frame.png", "ground_truth.mp4", "metadata.json"}
     ALL_VALID_FILES = REQUIRED_FILES | OPTIONAL_FILES
 
     def validate_sample(self, sample_dir: Path) -> ValidationResult:
@@ -137,7 +137,7 @@ def rename_samples(domain_task_dir: Path, start_index: int) -> list[str]:
             continue
 
         global_task_id_int = start_index + local_index
-        sample_id = f"{task_name}_{global_task_id_int:04d}"
+        sample_id = f"{task_name}_{global_task_id_int:08d}"
 
         logger.debug(f"Mapping local task {original_task_id} to global ID {sample_id} (start_index={start_index})")
 
