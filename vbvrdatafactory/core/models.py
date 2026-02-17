@@ -15,6 +15,7 @@ class TaskMessage(BaseModel):
     seed: int | None = Field(default=None, ge=0, description="Random seed for reproducibility")
     output_format: str = Field(default="files", pattern="^(files|tar)$", description="Output format")
     output_bucket: str | None = Field(default=None, description="Override S3 bucket")
+    dedup: bool = Field(default=False, description="Enable DDB dedup mode")
 
 
 class TaskResult(BaseModel):

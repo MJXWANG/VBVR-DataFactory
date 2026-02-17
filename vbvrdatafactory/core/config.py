@@ -25,6 +25,9 @@ class VBVRDataFactoryConfig(BaseSettings):
     sqs_queue_url: str | None = Field(default=None, description="Main SQS queue URL")
     sqs_dlq_url: str | None = Field(default=None, description="Dead letter queue URL")
 
+    # Dedup
+    dedup_table_name: str | None = Field(default=None, description="DynamoDB table name for dedup")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
