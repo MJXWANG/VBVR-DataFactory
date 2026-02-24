@@ -1,12 +1,6 @@
 <h1 align="center" style="font-size: 3.5em; font-weight: bold;">VBVR DataFactory</h1>
 
 <p align="center">
-  <a href="https://video-reason.com/">
-    <img src="assets/vbvr-logo.svg" alt="Very Big Video Reasoning logo" width="180" />
-  </a>
-</p>
-
-<p align="center">
   <b>Scalable data generation for video reasoning models using AWS Lambda.</b>
 </p>
 
